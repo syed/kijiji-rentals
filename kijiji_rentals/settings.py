@@ -1,6 +1,6 @@
 # Django settings for kijiji_rentals project.
 import dj_database_url
-DATABASES = {'default': dj_database_url.config(default='postgres://localhost')}
+DATABASES = {'default': dj_database_url.config(default='postgres:///syedah')}
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -118,9 +118,10 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'ads',
 )
 
 # A sample logging configuration. The only tangible logging
