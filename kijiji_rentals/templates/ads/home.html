@@ -1,0 +1,8 @@
+<h1> Enter query </h1>
+
+<form action = {% url ads.views.home %} method="post">
+    {% csrf_token %}
+    <input name="query" /> 
+    <input type="submit" value="search" />
+</form>
+
