@@ -16,7 +16,7 @@ class Ad(models.Model) :
     rooms = models.CharField(choices=BEDROOM_CHOICES,max_length=20)
     furnished = models.BooleanField()
     content =  models.TextField()
-    url =  models.TextField()
+    url =  models.CharField(max_length=1000)
 
     def __unicode__(self):
         return str(self.ad_id)
