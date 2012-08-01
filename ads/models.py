@@ -17,5 +17,9 @@ class Ad(models.Model) :
     furnished = models.BooleanField()
     content =  models.TextField()
     url =  models.TextField()
+
+    def __unicode__(self):
+        return str(self.ad_id)
+
     
 
