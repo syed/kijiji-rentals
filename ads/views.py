@@ -1,6 +1,7 @@
 # Create your views here.
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.core import serializers
 from ads.models import Ad
 
 import datetime
@@ -18,8 +19,10 @@ def home(request):
     if request.POST.get('query') :
         #results is an array which contains Ad objets
         results = search_kijiji(request.POST.get('query'))
+        centre = calculate_centre(results)
+        json_results = serializers.serialize('json' ,results,ensure_ascii=False)
         return render_to_response('ads/home.html',
-                {'results' :  results},
+                {'results' :  results , 'centre_lat' : centre[0] , 'centre_lng' : centre[1] , 'json_results' : json_results},
                 context_instance=RequestContext(request))
         
 
@@ -49,8 +52,7 @@ def search_kijiji(query):
     except : 
         return []
     
-    ret.append( extract_data(ad_urls) )
-    return ret
+    return ret + extract_data(ad_urls)
 
 
 def extract_data(ad_urls):
@@ -125,4 +127,13 @@ def extract_data(ad_urls):
 
 
     return result
+
+def calculate_centre(res) :
+    lat_c = 0
+    lng_c = 0
+    count = len(res)
+    for r in res : 
+        lat_c += r.lat
+        lng_c += r.lng
     
+    return [ 45.5081 , -73.5550 ] 

@@ -1,8 +1,68 @@
-<h1> Enter query </h1>
+<html>
+    <head>
+         <script type="text/javascript"
+             src="http://maps.googleapis.com/maps/api/js?&sensor=false"> </script>
+ {% if results and centre_lat and centre_lng  %}
+         <script type="text/javascript" src="/static/json_parse.js"></script>
 
-<form action = {% url ads.views.home %} method="post">
-    {% csrf_token %}
-    <input name="query" /> 
-    <input type="submit" value="search" />
-</form>
+        <script type="text/javascript">
+          function initialize_map() {
+            var mapOptions = {
+            center: new google.maps.LatLng({{ centre_lat }},{{ centre_lng }}),
+              zoom: 10,
+              mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            var map = new google.maps.Map(document.getElementById("map_canvas"),
+                    mapOptions);
 
+            var results = {{ json_results|safe }} ;
+
+            for( var i in results )
+            {
+                var res = results[i].fields;
+                console.log(res.lat);
+                //var mylat = new google.maps.LatLng(45.46038072549619, -73.6417303118858);
+                var mylat = new google.maps.LatLng(res.lat, res.lng);
+            
+                 var marker = new google.maps.Marker({
+                     position: mylat,
+                     title: "testing"
+                     });
+         
+                 marker.setMap(map);  
+         
+                 // Content string
+                 var info_data='This is a test';
+                 var info_window = new google.maps.InfoWindow({content: info_data });
+
+                 //click on marker will open popup  
+                 google.maps.event.addListener(marker, 'click', function() {
+                         info_window.open(map,marker);
+                         });
+            }
+        }
+    </script>
+ {% endif %}
+    </head>
+
+
+    <body {% if results and centre_lat and centre_lng  %} onload="initialize_map()" {%endif %} > 
+
+        <h1> Enter query </h1>
+
+        <form action = {% url ads.views.home %} method="post">
+            {% csrf_token %}
+            <input name="query" /> 
+            <input type="submit" value="search" />
+        </form>
+        <div id="map_canvas" style="width:100%; height:100%" ></div>
+
+        {% if results %} 
+        <table>
+            {% for res in results %}
+            <tr> <td> {{ res.url }}  </td> <td> {{ res.lat }} </td><td>  {{ res.lng }} </td> </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </body>
+</html>
