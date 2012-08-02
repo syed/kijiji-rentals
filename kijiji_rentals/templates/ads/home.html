@@ -5,7 +5,8 @@
  {% if results and centre_lat and centre_lng  %}
          <script type="text/javascript" src="/static/json_parse.js"></script>
 
-        <script type="text/javascript">
+         <script type="text/javascript">
+          var curr_info_window = false;   
           function initialize_map() {
             var mapOptions = {
             center: new google.maps.LatLng({{ centre_lat }},{{ centre_lng }}),
@@ -20,27 +21,42 @@
             for( var i in results )
             {
                 var res = results[i].fields;
-                console.log(res.lat);
-                //var mylat = new google.maps.LatLng(45.46038072549619, -73.6417303118858);
                 var mylat = new google.maps.LatLng(res.lat, res.lng);
             
                  var marker = new google.maps.Marker({
                      position: mylat,
-                     title: "testing"
+                     title: res.rent.toString()
                      });
          
                  marker.setMap(map);  
          
                  // Content string
-                 var info_data='This is a test';
+                 var info_data='<b>' + res.title + '</b><br>' +
+                     'rent: $'+  res.rent + '<br>'+
+                     'date: ' +  res.pub_date + '<br>'+
+                     'ad_link: <a href="' +  res.url +  '" target=_blank >Here </a>';
+                 listenMarker(map , marker , info_data );
+            }
+
+
+          }
+          function listenMarker (map, marker , info_data ) 
+          {
                  var info_window = new google.maps.InfoWindow({content: info_data });
 
                  //click on marker will open popup  
                  google.maps.event.addListener(marker, 'click', function() {
+                         if ( curr_info_window )
+                         {
+                            curr_info_window.close();
+                         }
                          info_window.open(map,marker);
+                         //update curr_info_window
+                         curr_info_window = info_window;
                          });
-            }
-        }
+          }
+
+
     </script>
  {% endif %}
     </head>
