@@ -1,7 +1,9 @@
 # Create your views here.
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from ads.models import Ad
 
+import datetime
 import urllib2
 import re
 from BeautifulSoup import BeautifulSoup as bs
@@ -27,6 +29,7 @@ def home(request):
 
 def search_kijiji(query):
     query_url='http://montreal.kijiji.ca/f-SearchAdRedirect?isSearchForm=true&Keyword=%s&CatId=37&lang=en' % query
+    ret = []
 
     try : 
         query_soup  = bs(opener.open(query_url).read())
@@ -37,11 +40,20 @@ def search_kijiji(query):
     ad_urls = [] 
     try : 
         for row in query_soup.find('table', id='SNB_Results').findAll('tr', id = re.compile('resultRow.*') ) :
-            ad_urls.append(row.find('a').get('href'))
+            ad_url = (row.find('a').get('href'))
+            if not Ad.objects.filter(url=ad_url) : 
+                ad_urls.append(ad_url)
+            else : 
+                print "[FOUND]",ad_url
+                ret.append(Ad.objects.get(url=ad_url))
     except : 
         return []
+    
+    ret.append( extract_data(ad_urls) )
+    return ret
 
-   
+
+def extract_data(ad_urls):
     result = []
     attribute_dict = { 'Date Listed' : 'date' ,
                        'Price' : 'price' ,
@@ -52,41 +64,65 @@ def search_kijiji(query):
                      }
 
     for ad_url in ad_urls : 
-        print "url" , ad_url 
         try: 
+            items = dict() #empty dict used to create the db object 
+            items['url'] = ad_url
             #get ad data
             ad_soup = bs(opener.open(ad_url).read())
             map_link = ''
 
             #title 
-            title = ad_soup.find('h1',id='preview-local-title').getText()
-            print "title: " , title
-            
+            title = ad_soup.find('h1',id='preview-local-title').getText().replace('google_ad_section_start','').replace('google_ad_section_end','')
+            items['title'] = title
+           
+            #table data
             for tr in ad_soup.find('table' , id='attributeTable').findAll('tr') :
                 for td in tr.findAll('td') :
                     key =  td.getText()
                     if key in attribute_dict : 
                         value = td.findNext('td').getText()
-                        print key , ":" ,  value
+                        if attribute_dict.get(key) == 'date' :
+                            items['pub_date'] =  datetime.datetime.strptime(value,"%d-%b-%y")
 
+                        if attribute_dict.get(key) == 'bathrooms' :
+                            items['bathrooms'] = float(re.match('(\d+.?\d?) bathroom.*',value).group(1))
+
+                        if attribute_dict.get(key) == 'price' :
+                            if value.find('contact') > 0 :
+                                items['rent'] = 0
+                            else : 
+                                items['rent'] = int(float(value[1:].replace(',',''))) 
+
+                        if attribute_dict.get(key) == 'address' :
+                            items['address'] = value.replace('View map','')
+
+                        if attribute_dict.get(key) == 'furnished' or attribute_dict.get(key) == 'pet_friendly' :
+                            if value == 'No':
+                                items[attribute_dict.get(key)] = False
+                            else:
+                                items[attribute_dict.get(key)]=True
+                        
             # map coordinates
             map_url = 'http://montreal.kijiji.ca' + ad_soup.find('a', attrs = { 'class' : 'viewmap-link' } ).get('href')
             map_soup = bs(opener.open(map_url).read())
             for noscript in map_soup.findAll('noscript') :
                 if noscript.find('img') :
                     map_link =  noscript.find('img').get('src')
-            print map_link
             coords = urllib2.urlparse.parse_qs(urllib2.urlparse.urlparse(map_link).query)
-            print coords['center'][0].split(',')
+            lat_lng = coords['center'][0].split(',')
+            items['lat'] = float(lat_lng[0])
+            items['lng'] = float(lat_lng[1])
+
+            print items
+            ad = Ad(**items)
+            ad.save()
+            result.append(ad)
         
-        except: 
+        except Exception as e: 
+            print "[FAILED]" , ad_url
+            print e
             pass #skip to the next one 
 
 
     return result
     
-    
-
-
-    
-
