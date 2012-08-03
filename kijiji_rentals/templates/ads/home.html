@@ -8,28 +8,59 @@
         <script type="text/javascript"
              src="http://maps.googleapis.com/maps/api/js?&sensor=false"> </script>
         <script> <!-- Ajax form submission -->
+            // Generate 32 char random uuid 
+            var current_uuid = false;
+            function gen_uuid() {
+                var uuid = ""
+                for (var i=0; i < 32; i++) {
+                    uuid += Math.floor(Math.random() * 16).toString(16); 
+                }
+                return uuid
+            }
+
             $(function() {
                 var form = $("#searchform");
                 form.submit(function(e) {
+                    $( "#progressbar" ).progressbar("value" , 0 );
+                    var uuid = gen_uuid();
+                    current_uuid = uuid;
+                    console.log(form.serializeArray());
                     console.log(form.attr('action'));
                     $("#submitbutton").attr('disabled', true);
+
+                    var query_data = form.serializeArray() ;
+                    query_data.push({ name : 'X-Progress-ID',  value : uuid });
+                    console.log(query_data);
+
                     $.getJSON( form.attr('action'), //url
-                    form.serializeArray(),//post data
+                    query_data ,//post data
                     function(responseText, responseStatus) {
                         $("#submitbutton").attr('disabled', false);
-                        console.log(responseText);
                         addMarkers(responseText);
                     }
                     );
+                    // poll for progress
+                    function doPoll(){
+                        if ( current_uuid == uuid )
+                        {
+                            $.get( '/get_progress' , { 'X-Progress-ID' : uuid } , function(response) {
+                                console.log(response);
+                                $( "#progressbar" ).progressbar("value" , parseInt(response));
+                                setTimeout(doPoll,3000);
+                            });
+                        } 
+                    } 
                     e.preventDefault(); 
+                    doPoll();
                 });
             });
+
         </script> <!-- End Ajax form submission -->
 
         <script> <!-- progressbar logic -->
         $(function() {
                 $( "#progressbar" ).progressbar({
-                        value: 37
+                        value:100 
                 });
         });
         </script> <!-- end progressbar logic -->

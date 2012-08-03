@@ -3,6 +3,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core import serializers
 from django.http import HttpResponse
+from django.core.cache import cache
+
+
 from ads.models import Ad
 
 import datetime
@@ -24,7 +27,8 @@ def home(request):
 def search(request) :
     if request.GET.get('query') :
         #results is an array which contains Ad objets
-        results = search_kijiji(request.GET.get('query'))
+        uuid = request.GET.get('X-Progress-ID')
+        results = search_kijiji(request.GET.get('query'), uuid)
         #centre = calculate_centre(results)
         json_results = serializers.serialize('json' ,results,ensure_ascii=False)
         return HttpResponse(json_results)        
@@ -33,7 +37,7 @@ def search(request) :
     return HttpResponse('')
 
 
-def search_kijiji(query):
+def search_kijiji(query, uuid):
     query_url='http://montreal.kijiji.ca/f-SearchAdRedirect?isSearchForm=true&Keyword=%s&CatId=37&lang=en' % query
     ret = []
 
@@ -44,6 +48,8 @@ def search_kijiji(query):
 
 
     ad_urls = [] 
+    total = 0 
+    found = 0 
     try : 
         for row in query_soup.find('table', id='SNB_Results').findAll('tr', id = re.compile('resultRow.*') ) :
             ad_url = (row.find('a').get('href'))
@@ -51,14 +57,16 @@ def search_kijiji(query):
                 ad_urls.append(ad_url)
             else : 
                 print "[FOUND]",ad_url
+                found+=1
                 ret.append(Ad.objects.get(url=ad_url))
+            total+=1
     except : 
         return []
-    
-    return ret + extract_data(ad_urls)
+    cache.set(uuid, {'total' : total, 'found' : found } ) 
+    return ret + extract_data(ad_urls,uuid)
 
 
-def extract_data(ad_urls):
+def extract_data(ad_urls,uuid):
     result = []
     attribute_dict = { 'Date Listed' : 'date' ,
                        'Price' : 'price' ,
@@ -128,8 +136,25 @@ def extract_data(ad_urls):
             print e
             pass #skip to the next one 
 
+        
+        cache_obj = cache.get(uuid)
+        new_obj = { 'total' : cache_obj['total'] , 'found' : cache_obj['found'] + 1 }
+        cache.set(uuid,new_obj)
 
     return result
+
+def search_progress(request) :
+    uuid =  request.GET.get('X-Progress-ID')
+    
+    cache_obj = cache.get(uuid)
+    print cache_obj
+    percent = 0 
+    if cache_obj :
+       percent = int((float(cache_obj['found'])/float(cache_obj['total']))*100) 
+
+    return HttpResponse(str(percent))
+
+    
 
 def calculate_centre(res) :
     lat_c = 0
