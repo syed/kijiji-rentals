@@ -2,6 +2,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core import serializers
+from django.http import HttpResponse
 from ads.models import Ad
 
 import datetime
@@ -16,19 +17,21 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 
 def home(request):
 
-    if request.POST.get('query') :
-        #results is an array which contains Ad objets
-        results = search_kijiji(request.POST.get('query'))
-        centre = calculate_centre(results)
-        json_results = serializers.serialize('json' ,results,ensure_ascii=False)
-        return render_to_response('ads/home.html',
-                {'results' :  results , 'centre_lat' : centre[0] , 'centre_lng' : centre[1] , 'json_results' : json_results},
-                context_instance=RequestContext(request))
-        
-
     #defautl response 
     return render_to_response('ads/home.html',
                         context_instance=RequestContext(request) )
+
+def search(request) :
+    if request.GET.get('query') :
+        #results is an array which contains Ad objets
+        results = search_kijiji(request.GET.get('query'))
+        #centre = calculate_centre(results)
+        json_results = serializers.serialize('json' ,results,ensure_ascii=False)
+        return HttpResponse(json_results)        
+
+
+    return HttpResponse('')
+
 
 def search_kijiji(query):
     query_url='http://montreal.kijiji.ca/f-SearchAdRedirect?isSearchForm=true&Keyword=%s&CatId=37&lang=en' % query

@@ -3,6 +3,9 @@
 # C extensions
 *.so
 
+# SWP files
+*.swp
+
 # Packages
 *.egg
 *.egg-info
@@ -31,3 +34,7 @@ nosetests.xml
 
 #Mr Developer
 .mr.developer.cfg
+
+#jquery ui demo files
+ads/static/index.html
+ads/static/development-bundle/
