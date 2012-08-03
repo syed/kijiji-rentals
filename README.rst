@@ -7,7 +7,7 @@ This django app collects the latest house/apt rentals search results from Kijiji
 you can see the demo here_
 
 .. _Kijiji: http://www.kijiji.ca
-.. _here: kijijirentals.herokuapp.com
+.. _here: http://kijijirentals.herokuapp.com
 
 
 #####
