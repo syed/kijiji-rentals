@@ -38,3 +38,4 @@ nosetests.xml
 #jquery ui demo files
 ads/static/index.html
 ads/static/development-bundle/
+*.idea
