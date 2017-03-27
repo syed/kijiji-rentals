@@ -15,6 +15,7 @@ import (
 	"math/rand"
 	"encoding/json"
 	"sync"
+	"fmt"
 )
 
 const (
@@ -22,13 +23,12 @@ const (
 	BASE_SEARCH_URL     string = "http://www.kijiji.ca/b-search.html?formSubmit=true&ll=&categoryId=0&categoryName=appartements%2C+condos&locationId=1700281&pageNumber=1&minPrice=&maxPrice=&adIdRemoved=&sortByName=dateDesc&userId=&origin=&searchView=LIST&urgentOnly=false&cpoOnly=false&carproofOnly=false&highlightOnly=false&gpTopAd=false&adPriceType=&brand=&keywords=charlevoix&SearchCategory=0&SearchLocationPicker=Ville+de+Montr%C3%A9al&siteLocale=en_CA"
 	MAX_CONCURRENT_REQS int    = 5
 	REQ_TIMEOUT                = 2 * time.Minute
-	MAX_PAGES           int    = 5
 )
 
 var jar *cookiejar.Jar
 var err error
 
-func init()  {
+func init() {
 	jar, err = cookiejar.New(nil)
 	if err != nil {
 		log.Warning("Unable to create cookie jar")
@@ -46,8 +46,6 @@ func BuildQueryURL(query models.KijijiQuery) (*url.URL, error) {
 	urlQuery := searchURL.Query()
 
 	urlQuery.Set("keywords", query.Keyword)
-
-	urlQuery.Set("pageNumber", strconv.Itoa(query.PageNumber))
 
 	if query.MinPrice > 0 {
 		urlQuery.Set("minPrice", strconv.Itoa(query.MinPrice))
@@ -81,32 +79,49 @@ func SearchKijiji(query models.KijijiQuery) ([]models.KijijiAd, error) {
 
 	ads := make([]models.KijijiAd, 0)
 
+	url, err := BuildQueryURL(query)
+	if err != nil {
+		return nil, err
+	}
 
-	for i := 1; i <= MAX_PAGES; i++ {
-		query.PageNumber = i
-		url, err := BuildQueryURL(query)
-		if err != nil {
-			return nil, err
-		}
+	data, err := GetKijijiPage(url)
+	if err != nil {
+		log.Warning("Unable to get Data for URL", url)
+		return nil, errors.New("Unable to get Data for search URL")
+	}
 
-		data, err := GetKijijiPage(url)
-		if err != nil {
-			log.Warning("Unable to get Data for URL", url)
-			continue
-		}
+	ads, err = ParseKijjiPage(data)
+	nextLinks := ParsePagination(data)
 
-		newAds, err := ParseKijjiPage(data)
-		if err != nil {
-			log.Warning("Unable to parse ads for URL", url)
-		}
+	if err != nil {
+		log.Warning("Unable to parse ads for URL", url)
+	}
 
-		ads = append(ads, newAds...)
-
+	for i, _ := range (nextLinks) {
 		//check if the last ad is beyond the end date
 		lastAd := ads[len(ads)-1]
 		if lastAd.DateListed.Before(query.PostedAfter) {
 			break
 		}
+
+		u, err := url.Parse(nextLinks[i])
+		if err != nil {
+			log.Warning("Unable to parse URL ", nextLinks[i])
+			continue
+		}
+
+		data, err := GetKijijiPage(u)
+		if err != nil {
+			log.Warning("Unable to get Data for URL", u)
+			continue
+		}
+
+		newAds, err := ParseKijjiPage(data)
+		if err != nil {
+			log.Warning("Unable to parse ads for URL", u)
+		}
+
+		ads = append(ads, newAds...)
 	}
 
 	ads = FetchAddress(ads)
@@ -230,13 +245,36 @@ func ParseAd(doc *goquery.Document) (models.KijijiAd, error) {
 	return ad, nil
 }
 
+func ParsePagination(html string) []string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
+	if err != nil {
+		log.Warning(err.Error())
+		return nil
+	}
+
+	nextLinks := make([]string, 0)
+
+	doc.Find(".pagination a").Each(func(i int, s *goquery.Selection) {
+		_, exists := s.Attr("title")
+
+		//links which don't have "title" attr set
+		if !exists {
+			l, _ := s.Attr("href")
+			nextLinks = append(nextLinks, BASE_URL+l)
+		}
+	})
+
+	return nextLinks
+}
+
 func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
 	mapUrl := "http://maps.google.com/maps/api/geocode/json?address=ReplaceAddress"
 
 	var wg sync.WaitGroup
-	wg.Add(len(ads))
 
 	for i := 0; i < len(ads); i++ {
+		wg.Add(1)
 		go func(i int, ads []models.KijijiAd) {
 			defer wg.Done()
 			addressUrl, err := url.Parse(mapUrl)
@@ -249,7 +287,7 @@ func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
 			query.Set("address", ads[i].Address)
 			addressUrl.RawQuery = query.Encode()
 
-			time.Sleep(time.Duration(rand.Intn(3)) * time.Second)
+			time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 			resp, err := http.Get(addressUrl.String())
 			if err != nil {
 				log.Warning(err)
@@ -266,14 +304,18 @@ func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
 			}
 
 			if len(location.Results) == 0 {
-				log.Warning("No results for address:", addressUrl)
+				log.Warning("No results for address:", addressUrl.String())
+				fmt.Printf("No results for address: %s\n", addressUrl.String())
 				return
 			}
 
 			ads[i].MapLocation.Lat = location.Results[0].Geometry.Location.Lat
 			ads[i].MapLocation.Lng = location.Results[0].Geometry.Location.Lng
-
 		}(i, ads)
+
+		if i%MAX_CONCURRENT_REQS == 0 {
+			wg.Wait()
+		}
 	}
 	wg.Wait()
 	return ads

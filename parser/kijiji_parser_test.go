@@ -8,6 +8,9 @@ import (
 	"github.com/syed/kijiji-rentals/log"
 	"os"
 	"github.com/stretchr/testify/assert"
+	"net/url"
+	"fmt"
+	"unicode/utf8"
 )
 
 const searchKeyword string = "Downtown"
@@ -76,5 +79,10 @@ func TestParseAd(t *testing.T) {
 	ad, err := ParseAd(doc)
 
 	log.Debug(ad.Address)
+
+	u, _ := url.Parse("http://www.google.com/?test=value")
+	q := u.Query()
+	q.Set("test", ad.Address)
+	u.RawQuery = q.Encode()
 	assert.Equal(t, ad.Price, 575.0)
 }

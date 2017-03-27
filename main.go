@@ -70,9 +70,9 @@ func serveStatic(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", serveIndex)
 	http.HandleFunc("/query", queryKijiji)
-	http.HandleFunc("/static", serveStatic)
+	http.HandleFunc("/static/", serveStatic)
+	http.HandleFunc("/", serveIndex)
 
 	log.Debug("Serving ...")
 
