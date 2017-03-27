@@ -3,6 +3,12 @@
         var directionField = $.parseHTML(`
             <form action="#" onSubmit="event.preventDefault(); return searchDirection(this);">
                 <input type="text" />
+                <select id="mode" onchange="calcRoute();">
+                  <option value="DRIVING">Driving</option>
+                  <option value="WALKING">Walking</option>
+                  <option value="BICYCLING">Bicycling</option>
+                  <option value="TRANSIT">Transit</option>
+                </select>
                 <a href="#" onclick="removeDirection(this)">
                 <i class="fa fa-trash" style="color:red"></i>
               </a>
