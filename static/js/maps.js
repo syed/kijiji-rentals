@@ -1,7 +1,12 @@
 // globals
 var curr_info_window = false;
 var map = false;
+
 var markersArray = [];
+
+var directionsService = new google.maps.DirectionsService;
+var directionsDisplay = new google.maps.DirectionsRenderer;
+
 function initialize_map() {
     var mapOptions = {
         center: new google.maps.LatLng(45.5081, -73.5550), //hardcoded to montreal's centre
@@ -9,8 +14,6 @@ function initialize_map() {
         mapTypeId: google.maps.MapTypeId.ROADMAP
     };
 
-    var directionsService = new google.maps.DirectionsService;
-    var directionsDisplay = new google.maps.DirectionsRenderer;
 
 
     map = new google.maps.Map(document.getElementById("map_canvas"),
@@ -35,7 +38,10 @@ function addMarkers(results) {
         markersArray.push(marker);
 
         // Content string
-        var info_data = `<b> ${res.title} </b><br>
+        var info_data = `<div>
+                <input type="hidden" name="lat" value="${res.map_location.lat}">
+                <input type="hidden" name="lng" value="${res.map_location.lng}">
+                <b> ${res.title} </b><br>
                 rent: $${res.price} <br>
                 date: ${res.date_listed} <br>
                 link: <a href="${res.url}" target=_blank >Here </a>
@@ -54,7 +60,8 @@ function addMarkers(results) {
                         <i class="fa fa-plus-circle"></i>
                     </a>
                 <br />
-                </div>`;
+                </div>
+            </div>`;
 
         listenMarker(map, marker, info_data);
     }
@@ -80,4 +87,29 @@ function deleteOverlays() {
         }
         markersArray.length = 0;
     }
+}
+
+function addDirectionOverlay(srcLatLng, destStr, travelMode) {
+
+    console.log(srcLatLng);
+    console.log(destStr);
+
+    var directionsDisplay = new google.maps.DirectionsRenderer({
+          map: map
+    });
+
+    var request = {
+        origin: srcLatLng,
+        destination: destStr,
+        travelMode: travelMode
+    };
+
+
+    var directionsService = new google.maps.DirectionsService();
+    directionsService.route(request, function(response, status) {
+      if (status == 'OK') {
+        // Display the route on the map.
+        directionsDisplay.setDirections(response);
+      }
+    });
 }

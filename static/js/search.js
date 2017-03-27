@@ -31,8 +31,19 @@
     }
 
     function searchDirection(elem) {
-        queryElem = $(elem).children()[0]
-        console.log($(queryElem).val());
+        var queryElem = $(elem).children()[0]
+        var destStr = $(queryElem).val();
+
+        var travelModeSelectEleme= $(elem).children()[1]
+        var travelMode = $(travelModeSelectEleme).val();
+
+
+        var lat = parseFloat($(elem).parent().parent().find("input[name='lat']").val());
+        var lng = parseFloat($(elem).parent().parent().find("input[name='lng']").val());
+        var originLatLng = { lat:lat, lng: lng};
+
+        addDirectionOverlay(originLatLng, destStr, travelMode);
+
         return false;
     }
 
