@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/syed/kijiji-rentals/models"
+        "fmt"
 )
 
 func SaveAdsToDB(ads []models.KijijiAd) {
@@ -38,7 +39,9 @@ func GetAdsFromDB(query models.KijijiQuery) []models.KijijiAd {
 	defer db.Close()
 
         ads := make([]models.KijijiAd, 0, 0)
-        db.Where("date_listed >= ? AND description LIKE ?", query.PostedAfter, query.Keyword).Find(&ads)
+        db.Where("date_listed >= ? AND description LIKE ?",
+                query.PostedAfter,
+                fmt.Sprintf("%%%s%%", query.Keyword)).Find(&ads)
 
         return ads
 }
