@@ -19,5 +19,5 @@ type KijijiAd struct {
         Price       float64 `json:"price"`
         Address     string `json:"address"`
         Lat     	float64 `json:"lat"`
-        Lng 		float64 `json:"lat"`
+        Lng 		float64 `json:"lng"`
 }

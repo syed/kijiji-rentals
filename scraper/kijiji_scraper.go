@@ -18,6 +18,8 @@ func StartScrape() {
 
         for {
 
+                <-time.After(POLL_TIME)
+
                 yesterday := time.Now().AddDate(0, 0, -1);
                 query := models.KijijiQuery{Keyword: "", PostedAfter: yesterday}
                 ads, err := parser.SearchKijiji(query)
@@ -28,6 +30,5 @@ func StartScrape() {
 
                 db.SaveAdsToDB(ads)
 
-                <-time.After(POLL_TIME)
         }
 }
