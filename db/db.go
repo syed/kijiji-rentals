@@ -6,26 +6,26 @@ import (
 	"github.com/syed/kijiji-rentals/models"
 )
 
-func SaveAdsToDB(ads []models.KijijiAd)  {
+func SaveAdsToDB(ads []models.KijijiAd) {
 
-        db, err := gorm.Open("sqlite3", "kijiji.db")
-        if err != nil {
-                panic("failed to connect database")
-        }
-        defer db.Close()
+	db, err := gorm.Open("sqlite3", "kijiji.db")
+	if err != nil {
+		panic("failed to connect database")
+	}
+	defer db.Close()
 
-        // Migrate the schema
-        db.AutoMigrate(&models.KijijiAd{})
+	// Migrate the schema
+	db.AutoMigrate(&models.KijijiAd{})
 
-        dbRecord := models.KijijiAd{}
-        for i := range ads {
-                ad := ads[i]
+	dbRecord := models.KijijiAd{}
+	for i := range ads {
+		ad := ads[i]
 
-                db.Where("url = ?", ad.Url).First(&dbRecord)
+		db.Where("url = ?", ad.Url).First(&dbRecord)
 
-                if dbRecord.Url != ad.Url {
-                        db.Create(ads[i])
-                }
-        }
+		if dbRecord.Url != ad.Url {
+			db.Create(ads[i])
+		}
+	}
 
 }
