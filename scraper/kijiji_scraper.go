@@ -4,8 +4,8 @@ import (
 	"github.com/syed/kijiji-rentals/parser"
 	"github.com/syed/kijiji-rentals/models"
 	"time"
-	"bitbucket.org/syed1/blex/pkg/log"
         "github.com/syed/kijiji-rentals/db"
+        "github.com/syed/kijiji-rentals/log"
 )
 
 const POLL_TIME time.Duration = 1 * time.Hour // Poll kijiji every hour
