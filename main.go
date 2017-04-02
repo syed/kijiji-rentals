@@ -11,6 +11,7 @@ import (
 	"github.com/syed/kijiji-rentals/parser"
 	"github.com/syed/kijiji-rentals/log"
         "github.com/syed/kijiji-rentals/scraper"
+        "github.com/syed/kijiji-rentals/db"
 )
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -44,16 +45,19 @@ func queryKijiji(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
 	query := models.KijijiQuery{
 		Keyword:r.Form["query"][0],
 		PostedAfter:afterDate,
 	}
 
-	ads, err := parser.SearchKijiji(query)
+	/* ads, err := parser.SearchKijiji(query)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
-	}
+	} */
+
+        ads := db.GetAdsFromDB(query)
 
 	log.Debug(fmt.Sprintf("Got %d ads ", len(ads)))
 
@@ -79,7 +83,7 @@ func main() {
 
         //start scraper
 
-        scraper.StartScrape()
+        go scraper.StartScrape()
 
 
 	err := http.ListenAndServe(":9090", nil) // set listen port

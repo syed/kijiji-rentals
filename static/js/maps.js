@@ -65,15 +65,15 @@ function addMarkers(results) {
 
     for (i = 0; i < results.length; i++) {
         res = results[i];
-        if (res.map_location == null) {
+        if (res.lat === null) {
             continue;
         }
-        var mylat = new google.maps.LatLng(res.map_location.lat, res.map_location.lng);
+        var mylat = new google.maps.LatLng(res.lat, res.lng);
 
         // Content string
         var infoData = `<div>
-                <input type="hidden" name="lat" value="${res.map_location.lat}">
-                <input type="hidden" name="lng" value="${res.map_location.lng}">
+                <input type="hidden" name="lat" value="${res.lat}">
+                <input type="hidden" name="lng" value="${res.lng}">
                 <b> ${res.title} </b><br>
                 rent: $${res.price} <br>
                 date: ${res.date_listed} <br>

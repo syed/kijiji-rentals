@@ -27,5 +27,18 @@ func SaveAdsToDB(ads []models.KijijiAd) {
 			db.Create(ads[i])
 		}
 	}
+}
 
+func GetAdsFromDB(query models.KijijiQuery) []models.KijijiAd {
+
+	db, err := gorm.Open("sqlite3", "kijiji.db")
+	if err != nil {
+		panic("failed to connect database")
+	}
+	defer db.Close()
+
+        ads := make([]models.KijijiAd, 0, 0)
+        db.Where("date_listed >= ? AND description LIKE ?", query.PostedAfter, query.Keyword).Find(&ads)
+
+        return ads
 }
