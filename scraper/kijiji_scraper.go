@@ -30,5 +30,7 @@ func StartScrape() {
 
                 db.SaveAdsToDB(ads)
 
+                //<-time.After(POLL_TIME)
+
         }
 }

@@ -20,7 +20,7 @@ import (
 
 const (
 	BASE_URL            string = "http://www.kijiji.ca"
-	BASE_SEARCH_URL     string = "http://www.kijiji.ca/b-search.html?formSubmit=true&ll=&categoryId=0&categoryName=appartements%2C+condos&locationId=1700281&pageNumber=1&minPrice=&maxPrice=&adIdRemoved=&sortByName=dateDesc&userId=&origin=&searchView=LIST&urgentOnly=false&cpoOnly=false&carproofOnly=false&highlightOnly=false&gpTopAd=false&adPriceType=&brand=&keywords=charlevoix&SearchCategory=0&SearchLocationPicker=Ville+de+Montr%C3%A9al&siteLocale=en_CA"
+	BASE_SEARCH_URL     string = "http://www.kijiji.ca/b-search.html?formSubmit=true&ll=&categoryId=34&categoryName=appartements%2C+condos&locationId=1700281&pageNumber=1&minPrice=&maxPrice=&adIdRemoved=&sortByName=dateDesc&userId=&origin=&searchView=LIST&urgentOnly=false&cpoOnly=false&carproofOnly=false&highlightOnly=false&gpTopAd=false&adPriceType=&brand=&keywords=charlevoix&SearchCategory=0&SearchLocationPicker=Ville+de+Montr%C3%A9al&siteLocale=en_CA"
 	MAX_CONCURRENT_REQS int    = 5
 	REQ_TIMEOUT                = 2 * time.Minute
 	MAP_URL                    = "http://maps.google.com/maps/api/geocode/json?address=ReplaceAddress"
