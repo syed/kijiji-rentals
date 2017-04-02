@@ -1,21 +1,21 @@
 package parser
 
 import (
-	"net/url"
-	"github.com/syed/kijiji-rentals/models"
-	"github.com/syed/kijiji-rentals/log"
+	"encoding/json"
 	"errors"
-	"strconv"
+	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/syed/kijiji-rentals/log"
+	"github.com/syed/kijiji-rentals/models"
+	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
-	"io/ioutil"
-	"github.com/PuerkitoBio/goquery"
+	"net/url"
+	"strconv"
 	"strings"
-	"time"
-	"math/rand"
-	"encoding/json"
 	"sync"
-	"fmt"
+	"time"
 )
 
 const (
@@ -23,6 +23,7 @@ const (
 	BASE_SEARCH_URL     string = "http://www.kijiji.ca/b-search.html?formSubmit=true&ll=&categoryId=0&categoryName=appartements%2C+condos&locationId=1700281&pageNumber=1&minPrice=&maxPrice=&adIdRemoved=&sortByName=dateDesc&userId=&origin=&searchView=LIST&urgentOnly=false&cpoOnly=false&carproofOnly=false&highlightOnly=false&gpTopAd=false&adPriceType=&brand=&keywords=charlevoix&SearchCategory=0&SearchLocationPicker=Ville+de+Montr%C3%A9al&siteLocale=en_CA"
 	MAX_CONCURRENT_REQS int    = 5
 	REQ_TIMEOUT                = 2 * time.Minute
+        MAP_URL                    = "http://maps.google.com/maps/api/geocode/json?address=ReplaceAddress"
 )
 
 var jar *cookiejar.Jar
@@ -38,10 +39,6 @@ func init() {
 
 /* Given a keyword, searches kijiji and returns the raw HTML */
 func BuildQueryURL(query models.KijijiQuery) (*url.URL, error) {
-	if len(query.Keyword) == 0 {
-		return nil, errors.New("Keyword must be specified")
-	}
-
 	searchURL, _ := url.ParseRequestURI(BASE_SEARCH_URL)
 	urlQuery := searchURL.Query()
 
@@ -97,7 +94,7 @@ func SearchKijiji(query models.KijijiQuery) ([]models.KijijiAd, error) {
 		log.Warning("Unable to parse ads for URL", url)
 	}
 
-	for i, _ := range (nextLinks) {
+	for i := range nextLinks {
 		//check if the last ad is beyond the end date
 		lastAd := ads[len(ads)-1]
 		if lastAd.DateListed.Before(query.PostedAfter) {
@@ -124,7 +121,6 @@ func SearchKijiji(query models.KijijiQuery) ([]models.KijijiAd, error) {
 		ads = append(ads, newAds...)
 	}
 
-	ads = FetchAddress(ads)
 	return ads, nil
 }
 
@@ -186,6 +182,7 @@ func FetchAndParseKijijiAd(l string, start chan bool, res chan models.KijijiAd) 
 	}
 
 	ad, err := ParseAd(doc)
+        FetchSingleAddress(&ad)
 	ad.Url = u.String()
 
 	res <- ad
@@ -245,6 +242,7 @@ func ParseAd(doc *goquery.Document) (models.KijijiAd, error) {
 	return ad, nil
 }
 
+// returns a list of links to the next page listings
 func ParsePagination(html string) []string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
@@ -268,8 +266,9 @@ func ParsePagination(html string) []string {
 	return nextLinks
 }
 
+
+// testing function not being used right now
 func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
-	mapUrl := "http://maps.google.com/maps/api/geocode/json?address=ReplaceAddress"
 
 	var wg sync.WaitGroup
 
@@ -277,40 +276,8 @@ func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
 		wg.Add(1)
 		go func(i int, ads []models.KijijiAd) {
 			defer wg.Done()
-			addressUrl, err := url.Parse(mapUrl)
-			if err != nil {
-				log.Warning(err)
-				return
-			}
+                        FetchSingleAddress(&ads[i])
 
-			query := addressUrl.Query()
-			query.Set("address", ads[i].Address)
-			addressUrl.RawQuery = query.Encode()
-
-			time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
-			resp, err := http.Get(addressUrl.String())
-			if err != nil {
-				log.Warning(err)
-				return
-			}
-			defer resp.Body.Close()
-
-			var location models.LocationResult
-			decoder := json.NewDecoder(resp.Body)
-			err = decoder.Decode(&location)
-			if err != nil {
-				log.Warning(err)
-				return
-			}
-
-			if len(location.Results) == 0 {
-				log.Warning("No results for address:", addressUrl.String())
-				fmt.Printf("No results for address: %s\n", addressUrl.String())
-				return
-			}
-
-			ads[i].MapLocation.Lat = location.Results[0].Geometry.Location.Lat
-			ads[i].MapLocation.Lng = location.Results[0].Geometry.Location.Lng
 		}(i, ads)
 
 		if i%MAX_CONCURRENT_REQS == 0 {
@@ -319,4 +286,41 @@ func FetchAddress(ads []models.KijijiAd) []models.KijijiAd {
 	}
 	wg.Wait()
 	return ads
+}
+
+func FetchSingleAddress(ad *models.KijijiAd) {
+        addressUrl, err := url.Parse(MAP_URL)
+        if err != nil {
+                log.Warning(err)
+                return
+        }
+
+        query := addressUrl.Query()
+        query.Set("address", ad.Address)
+        addressUrl.RawQuery = query.Encode()
+
+        time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+        resp, err := http.Get(addressUrl.String())
+        if err != nil {
+                log.Warning(err)
+                return
+        }
+        defer resp.Body.Close()
+
+        var location models.LocationResult
+        decoder := json.NewDecoder(resp.Body)
+        err = decoder.Decode(&location)
+        if err != nil {
+                log.Warning("Error decoding maps json response", err.Error())
+                return
+        }
+
+        if len(location.Results) == 0 {
+                log.Warning("No results for address:", addressUrl.String())
+                fmt.Printf("No results for address: %s\n", addressUrl.String())
+                return
+        }
+
+        ad.Lat = location.Results[0].Geometry.Location.Lat
+        ad.Lng = location.Results[0].Geometry.Location.Lng
 }

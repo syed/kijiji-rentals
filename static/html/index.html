@@ -14,7 +14,7 @@
     <script src="https://use.fontawesome.com/c1372678c6.js"></script>
 
     <script type="text/javascript"
-            src="http://maps.googleapis.com/maps/api/js"></script>
+            src="http://maps.googleapis.com/maps/api/js?libraries=places"></script>
 
     <script type="text/javascript" src="/static/js/main.js"></script>  <!-- Main form submission -->
     <script type="text/javascript" src="/static/js/maps.js"></script>  <!-- Google maps API -->
@@ -41,8 +41,12 @@
 
         <label for="datepicker">Date:</label>
         <input type="text" id="datepicker" name="date">
+        <div id="submitbutton" class="submit">
+        <input type="submit" value="search" class="submit" style="visibility: visible;"/>
+            <i class="fa fa-spinner fa-spin fa-fw" style="visibility: hidden;"></i>
+            <span class="sr-only">Loading...</span>
+        </div>
 
-        <input id="submitbutton" type="submit" value="search" class="submit"/>
     </div>
     </p>
 </form>

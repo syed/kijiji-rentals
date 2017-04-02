@@ -20,7 +20,7 @@
     function addPlace(elem) {
         console.log(elem);
         var placeField = $.parseHTML(`
-            <form action="#" onSubmit="event.preventDefault(); return searchPlace(this);">
+            <form action="#" onSubmit="event.preventDefault(); return searchNearbyPlace(this);">
                 <input type="text" />
                 <a href="#" onclick="removePlace(this)">
                 <i class="fa fa-trash" style="color:red"></i>
@@ -31,11 +31,11 @@
     }
 
     function searchDirection(elem) {
-        var queryElem = $(elem).children()[0]
+        var queryElem = $(elem).children()[0];
         var destStr = $(queryElem).val();
 
-        var travelModeSelectEleme= $(elem).children()[1]
-        var travelMode = $(travelModeSelectEleme).val();
+        var travelModeSelectElemet = $(elem).children()[1]
+        var travelMode = $(travelModeSelectElemet).val();
 
 
         var lat = parseFloat($(elem).parent().parent().find("input[name='lat']").val());
@@ -47,9 +47,18 @@
         return false;
     }
 
-    function searchPlace(elem) {
-        queryElem = $(elem).children()[0]
-        console.log($(queryElem).val());
+    function searchNearbyPlace(elem) {
+        var queryElem = $(elem).children()[0];
+        var query = $(queryElem).val();
+
+        var lat = parseFloat($(elem).parent().parent().find("input[name='lat']").val());
+        var lng = parseFloat($(elem).parent().parent().find("input[name='lng']").val());
+        var originLatLng = { lat:lat, lng: lng};
+
+        console.log(query);
+
+        addNearbyPlaces(query, originLatLng);
+
         return false;
     }
 

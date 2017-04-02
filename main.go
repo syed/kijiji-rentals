@@ -10,6 +10,7 @@ import (
 	"time"
 	"github.com/syed/kijiji-rentals/parser"
 	"github.com/syed/kijiji-rentals/log"
+        "github.com/syed/kijiji-rentals/scraper"
 )
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +76,11 @@ func main() {
 	http.HandleFunc("/", serveIndex)
 
 	log.Debug("Serving ...")
+
+        //start scraper
+
+        scraper.StartScrape()
+
 
 	err := http.ListenAndServe(":9090", nil) // set listen port
 	if err != nil {

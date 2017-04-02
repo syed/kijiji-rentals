@@ -2,7 +2,9 @@ $(function () {
     var form = $("#searchform");
     form.submit(function (e) {
         //prevent double submit
-        $("#submitbutton").attr('disabled', true);
+        //make spinner visible and hide the search button
+        $("#submitbutton input").css("visibility", "hidden");
+        $("#submitbutton i").css("visibility", "visible");
 
         var query_data = form.serializeArray();
         console.log(query_data);
@@ -12,7 +14,9 @@ $(function () {
             function (responseText, responseStatus) {
                 console.log(responseText);
 
-                $("#submitbutton").attr('disabled', false);
+                $("#submitbutton input").css("visibility", "visible");
+                $("#submitbutton i").css("visibility", "hidden");
+
                 addMarkers(responseText);
             }
         );
