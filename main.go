@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"github.com/syed/kijiji-rentals/models"
 	"time"
-	"github.com/syed/kijiji-rentals/parser"
 	"github.com/syed/kijiji-rentals/log"
         "github.com/syed/kijiji-rentals/scraper"
         "github.com/syed/kijiji-rentals/db"
