@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/syed/kijiji-rentals/models"
-	"time"
 	"github.com/syed/kijiji-rentals/log"
         "github.com/syed/kijiji-rentals/scraper"
         "github.com/syed/kijiji-rentals/db"
@@ -36,19 +35,25 @@ func serveIndex(w http.ResponseWriter, r *http.Request) {
 func queryKijiji(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	fmt.Println("Form", r.Form)
-
 	fmt.Println("Got Query ")
 
-	afterDate, err := time.Parse("01/02/2006", r.Form["date"][0])
+        decoder := json.NewDecoder(r.Body)
+        query  := models.KijijiQuery{}
+
+        err := decoder.Decode(&query)
+
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	query := models.KijijiQuery{
-		Keyword:r.Form["query"][0],
-		PostedAfter:afterDate,
-	}
+        defer r.Body.Close()
+
+        /* afterDate, err := time.Parse("01/02/2006", r.Form["date"][0])
+        query := models.KijijiQuery{
+                Keyword:r.Form["query"][0],
+                PostedAfter:afterDate,
+        } */
 
 	/* ads, err := parser.SearchKijiji(query)
 	if err != nil {

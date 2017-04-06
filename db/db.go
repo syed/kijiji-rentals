@@ -45,3 +45,7 @@ func GetAdsFromDB(query models.KijijiQuery) []models.KijijiAd {
 
         return ads
 }
+
+func GetAdsFromDBInBoundingBox(query models.KijijiQuery) {
+
+}
