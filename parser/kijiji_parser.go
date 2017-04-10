@@ -298,7 +298,7 @@ func FetchSingleAddress(ad *models.KijijiAd) {
 	query.Set("address", ad.Address)
 	addressUrl.RawQuery = query.Encode()
 
-	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(15)) * time.Second)
 	resp, err := http.Get(addressUrl.String())
 	if err != nil {
 		log.Warning(err)

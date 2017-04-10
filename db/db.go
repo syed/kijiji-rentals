@@ -39,7 +39,8 @@ func GetAdsFromDB(query models.KijijiQuery) []models.KijijiAd {
 	defer db.Close()
 
         ads := make([]models.KijijiAd, 0, 0)
-        db.Where("date_listed >= ? AND description LIKE ? AND lat >= ? AND lat <= ? AND lng >= ? AND lng <= ? LIMIT 10",
+	q := "date_listed >= ? AND description LIKE ? AND lat >= ? AND lat <= ? AND lng >= ? AND lng <= ? LIMIT 10"
+        db.Where(q,
                 query.PostedAfter,
                 fmt.Sprintf("%%%s%%", query.Keyword),
 		query.Bounds.Sw.Lat, query.Bounds.Ne.Lat,
