@@ -8,6 +8,30 @@ function objectifyForm(formArray) {//serialize data function
     return returnArray;
 }
 
+
+$.postJSON = function(url, data, callback) {
+    console.log(JSON.stringify(data));
+    return jQuery.ajax({
+        'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback
+    });
+};
+
+// http://stackoverflow.com/questions/7244246/generate-an-rfc-3339-timestamp-similar-to-google-tasks-api
+/* use a function for the exact format desired... */
+function ISODateString(d){
+    function pad(n){return n<10 ? '0'+n : n}
+    return d.getUTCFullYear()+'-'
+        + pad(d.getUTCMonth()+1)+'-'
+        + pad(d.getUTCDate())+'T'
+        + pad(d.getUTCHours())+':'
+        + pad(d.getUTCMinutes())+':'
+        + pad(d.getUTCSeconds())+'Z'}
+
 $(function () {
     var form = $("#searchform");
 
@@ -20,7 +44,7 @@ $(function () {
 
         var query_data = objectifyForm(form.serializeArray());
 
-        query_data.posted_after = Date.parse(query_data.posted_after);
+        query_data.posted_after = new Date(query_data.posted_after).toISOString();
 
         bounds  = map.getBounds();
         ne = bounds.getNorthEast();
@@ -38,15 +62,15 @@ $(function () {
 
         console.log(query_data);
 
-        $.getJSON(form.attr('action'), //url
+        $.postJSON(form.attr('action'), //url
             query_data,//post data
             function (responseText, responseStatus) {
                 console.log(responseText);
 
                 $("#submitbutton input").css("visibility", "visible");
-                $("#submitbutton i").css("visibility", "hidden");
+                //$("#submitbutton i").css("visibility", "hidden");
 
-                addMarkers(responseText);
+                //addMarkers(responseText);
             }
         );
         // prevent actual submit from happening

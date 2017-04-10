@@ -9,8 +9,6 @@ import (
 	"os"
 	"github.com/stretchr/testify/assert"
 	"net/url"
-	"fmt"
-	"unicode/utf8"
 )
 
 const searchKeyword string = "Downtown"
