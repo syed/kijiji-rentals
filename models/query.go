@@ -3,13 +3,13 @@ package models
 import "time"
 
 type Point struct{
-        lat float64 `json:"lat"`
-        lng float64 `json:"lng"`
+        Lat float64 `json:"lat"`
+        Lng float64 `json:"lng"`
 }
 
 type Bounds  struct{
-        ne Point `json:"ne"`
-        sw Point `json:"nw"`
+        Ne Point `json:"ne"`
+        Sw Point `json:"nw"`
 }
 
 type KijijiQuery struct {

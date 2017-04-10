@@ -3,7 +3,7 @@ var curr_info_window = false;
 var map = false;
 
 var rentalMarkersArray = [];
-var directionsArray = []
+var directionsArray = [];
 var nearbyPlacesMarkersArray = [];
 
 var currentLocation;
@@ -32,7 +32,7 @@ function customMarker(latLng) {
     });
 }
 
-function initialize_map() {
+function initialize_map(zoomHandler) {
     var mapOptions = {
         center: new google.maps.LatLng(45.5081, -73.5550), //hardcoded to montreal's centre
         zoom: 12,
@@ -41,6 +41,8 @@ function initialize_map() {
 
     map = new google.maps.Map(document.getElementById("map_canvas"),
         mapOptions);
+
+    google.maps.event.addListener(map, 'zoom_changed', zoomHandler);
 }
 
 

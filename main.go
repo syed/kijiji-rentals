@@ -49,18 +49,6 @@ func queryKijiji(w http.ResponseWriter, r *http.Request) {
 
         defer r.Body.Close()
 
-        /* afterDate, err := time.Parse("01/02/2006", r.Form["date"][0])
-        query := models.KijijiQuery{
-                Keyword:r.Form["query"][0],
-                PostedAfter:afterDate,
-        } */
-
-	/* ads, err := parser.SearchKijiji(query)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	} */
-
         ads := db.GetAdsFromDB(query)
 
 	log.Debug(fmt.Sprintf("Got %d ads ", len(ads)))

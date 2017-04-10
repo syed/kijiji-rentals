@@ -8,7 +8,7 @@ function objectifyForm(formArray) {//serialize data function
     return returnArray;
 }
 
-
+// https://benjamin-schweizer.de/jquerypostjson.html
 $.postJSON = function(url, data, callback) {
     console.log(JSON.stringify(data));
     return jQuery.ajax({
@@ -20,17 +20,6 @@ $.postJSON = function(url, data, callback) {
         'success': callback
     });
 };
-
-// http://stackoverflow.com/questions/7244246/generate-an-rfc-3339-timestamp-similar-to-google-tasks-api
-/* use a function for the exact format desired... */
-function ISODateString(d){
-    function pad(n){return n<10 ? '0'+n : n}
-    return d.getUTCFullYear()+'-'
-        + pad(d.getUTCMonth()+1)+'-'
-        + pad(d.getUTCDate())+'T'
-        + pad(d.getUTCHours())+':'
-        + pad(d.getUTCMinutes())+':'
-        + pad(d.getUTCSeconds())+'Z'}
 
 $(function () {
     var form = $("#searchform");
@@ -78,6 +67,46 @@ $(function () {
     });
 });
 
+function mapZoomChangeHandler() {
+     var form = $("#searchform");
+     console.log(form);
+
+
+    var query_data = objectifyForm(form.serializeArray());
+
+    query_data.posted_after = new Date(query_data.posted_after).toISOString();
+
+    bounds  = map.getBounds();
+    ne = bounds.getNorthEast();
+    sw = bounds.getSouthWest();
+
+    query_data.bounds = {};
+    query_data.bounds.ne = {};
+    query_data.bounds.sw = {};
+
+    query_data.bounds.ne.lat = ne.lat();
+    query_data.bounds.ne.lng = ne.lng();
+
+    query_data.bounds.sw.lat = sw.lat();
+    query_data.bounds.sw.lng = sw.lng();
+
+    console.log(query_data);
+
+    $.postJSON(form.attr('action'), //url
+        query_data,//post data
+        function (responseText, responseStatus) {
+            console.log(responseText);
+
+            $("#submitbutton input").css("visibility", "visible");
+            //$("#submitbutton i").css("visibility", "hidden");
+
+            //addMarkers(responseText);
+        }
+    );
+}
+
 $(function () {
     $("#datepicker").datepicker({minDate: -20, maxDate: "+1M +10D"});
+
+    initialize_map(mapZoomChangeHandler);
 });
